@@ -1,0 +1,11 @@
+[project]
+name = "kicad-simple-parts"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.124.0",
+    "python-lsp-server>=1.14.0",
+    "uvicorn>=0.38.0",
+]
