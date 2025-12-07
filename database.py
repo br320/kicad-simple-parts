@@ -29,6 +29,41 @@ def init_db():
         )
     """)
 
+    cursor.execute("""
+       CREATE TABLE IF NOT EXISTS manufacturer_parts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            component_id INTEGER NOT NULL,
+            mfg TEXT NOT NULL,
+            mfgpn TEXT NOT NULL,
+            datasheet TEXT,
+            is_preferred BOOLEAN DEFAULT 0,
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (component_id) REFERENCES components(id) ON DELETE CASCADE,
+            UNIQUE(mfg, mfgpn)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS component_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            component_id INTEGER NOT NULL,
+            revision TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            value TEXT,
+            footprint TEXT,
+            symbol TEXT,
+            datasheet TEXT,
+            lifecycle_state TEXT,
+            change_message TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (component_id) REFERENCES components(id) ON DELETE CASCADE,
+            UNIQUE(component_id, revision)
+        )
+    """)
+
     conn.commit()
     conn.close()
     print(f"Database initialized at {DATABASE_PATH}")
