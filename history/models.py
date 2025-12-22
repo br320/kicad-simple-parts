@@ -1,23 +1,33 @@
-from pydantic import BaseModel
-from typing import Optional
-from datetime import datetime
+from sqlmodel import SQLModel, Field, Relationship 
+from typing import Optional, TYPE_CHECKING
+from datetime import datetime, timezone
+
+if TYPE_CHECKING:
+    from components.models import Component
 
 
-class ComponentHistoryCreate(BaseModel):
-    component_id: int
-    revision: str
-    change_message: str
-
-class ComponentHistory(BaseModel):
-    id: int
-    component_id: int
-    revision: str
+class ComponentHistoryBase(SQLModel):
+    component_id: int = Field(foreign_key="component.id")
     name: str
-    description: Optional[str]
-    value: Optional[str]
-    footprint: Optional[str]
-    symbol: Optional[str]
-    datasheet: Optional[str]
-    lifecycle_state: str
-    change_message: str
+    change_msg: str
+    lifecycle_state: str = "prototype"
+    description: Optional[str] = None
+    value: Optional[str] = None
+    footprint: Optional[str] = None
+    symbol: Optional[str] = None
+    datasheet: Optional[str] = None
+    revision: Optional[str] = None
+
+class ComponentHistory(ComponentHistoryBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    # Relationships
+    component: "Component" = Relationship(back_populates="history")
+
+class ComponentHistoryCreate(ComponentHistoryBase):
+    pass
+
+class ComponentHistoryRead(ComponentHistoryBase):
+    id: int
     created_at: datetime

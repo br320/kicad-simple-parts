@@ -2,14 +2,14 @@
 
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
-from database import init_db
-from components.routes import router as component_route
-from history.routes import router as history_route
-from mfg_info.routes import router as mfg_info_route
+from database import create_db_and_tables
+from components.routes import router as component_router
+from history.routes import router as history_router
+from mfg_info.routes import router as mfg_info_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
+    create_db_and_tables()
     yield
 
 app = FastAPI(
@@ -30,9 +30,9 @@ async def root():
 async def health_check():
     return {"status": "healthy"}
 
-app.include_router(component_route)
-app.include_router(history_route)
-app.include_router(mfg_info_route)
+app.include_router(component_router)
+app.include_router(history_router)
+app.include_router(mfg_info_router)
 
 
 if __name__ == "__main__":
