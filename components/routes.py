@@ -9,3 +9,7 @@ router = APIRouter(prefix="/components")
 @router.post("/", response_model=Component)
 async def create_component(component: ComponentCreate, session: Session = Depends(get_session)) -> Component:
     return crud.create_component(session, component)
+
+@router.get("/", response_model=list[Component])
+async def get_all_components(session: Session = Depends(get_session)) -> list[Component]:
+    return crud.get_all_components(session)

@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database import create_db_and_tables
 from components.routes import router as component_router
 from history.routes import router as history_router
 from mfg_info.routes import router as mfg_info_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -17,6 +19,13 @@ app = FastAPI(
         description="Simple component lifecycle management",
         version="0.1.0",
         lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Or ["http://localhost:8000"] for specific origin
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/")
