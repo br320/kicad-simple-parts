@@ -4,12 +4,12 @@ from database import get_session
 from components.models import Component
 from .models import ComponentHistoryCreate, ComponentHistory, ComponentHistoryRead
 
-def create_component_history(component_id: int, history: ComponentHistoryCreate, session: Session = Depends(get_session)) -> ComponentHistoryCreate:
+def create_component_history(component_id: int, history: ComponentHistory, session: Session = Depends(get_session)) -> ComponentHistory:
     component = session.get(Component, component_id)
     if not component:
         raise HTTPException(status_code=404, detail="Component not found")
 
-    db_history = ComponentHistoryCreate(
+    db_history = ComponentHistory(
         component_id=component_id,
         name=component.name,
         change_msg=history.change_msg,
