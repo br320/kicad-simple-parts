@@ -1,20 +1,39 @@
 from sqlmodel import SQLModel, Field, Relationship
-from pydantic import field_serializer
-from typing import Optional, TYPE_CHECKING, Any
+from pydantic import field_serializer 
+from typing import Optional, TYPE_CHECKING, Any, ClassVar
 from datetime import datetime
 
 class PartBase(SQLModel):
     name: str
     category_id: int
+    flags: int = Field(default=(0b111 << 29))
     description: Optional[str] = None
     value: Optional[str] = None
     datasheet: Optional[str] = None
     symbolIdStr: Optional[str] = None
     footprint: Optional[str] = None
 
+    _FLAGS: ClassVar = {
+            "exclude_from_bom": 0b1 << 31,
+            "exclude_from_board": 0b1 << 30,
+            "exclude_from_sim": 0b1 << 29,
+            "id": 0b1 << 28,
+            "name": 0b1 << 27,
+            "description": 0b1 << 26,
+            "value": 0b1 << 25,
+            "datasheet": 0b1 << 24,
+            "footprint": 0b1 << 23,
+    }
+
+    @classmethod
+    def get_flag(cls, key):
+        return cls._FLAGS.get(key, 0)
+
 
 class Part(PartBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    revision: Optional[str] = Field(default="A1")
+    lifecycle: Optional[str] = Field(default="Draft")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

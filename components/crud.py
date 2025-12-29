@@ -16,11 +16,15 @@ def get_detailed_part_info(part_id: int, session: Session) -> PartRead:
     if not part:
         raise HTTPException(status_code=404, detail=f"Part-{part_id} not found")
     part_read = PartRead.model_validate(part)
+    part_read.exclude_from_bom = part["flags"] & Part.get_flag("exclude_from_bom") != 0
+    part_read.exclude_from_board = part["flags"] & Part.get_flag("exclude_from_board") != 0
+    part_read.exclude_from_sim = part["flags"] & Part.get_flag("exclude_from_sim") != 0
     for key in part.keys():
-        if key not in part_read.model_dump().keys():
+        if key not in part_read.model_dump().keys() and key != "flags":
+            visible = (part["flags"] & Part.get_flag(key)) != 0
             part_read.fields[key] = { 
                 "value": str(part[key]),
-                "visible": "False"
+                "visible": str(visible)
             }
     return part_read
 
