@@ -1,15 +1,60 @@
 from sqlmodel import Session, select
 from fastapi import HTTPException
 from database import get_session
-from .models import Part, PartCreate, PartRead, PartReadBasic, CategoryCreate, Category, CategoryRead
+from .models import (
+        Part, 
+        PartCreate, 
+        PartRead, 
+        PartUpdate, 
+        PartReadBasic, 
+        CategoryCreate, 
+        Category, 
+        CategoryRead
+    )
+from history.crud import save_snapshot
+
+def _update_rev(rev: str, prod: bool) -> str:
+    a = ''.join(list(filter(lambda x: x.isalpha(), rev)))
+    if prod:
+        return chr(((ord(a) - ord('A')) + 1) % 26 + ord('A'))
+    n = list(filter(lambda x: x.isdigit(), rev))
+    if len(n) < 1: # previously production rev
+        a = chr(((ord(a) - ord('A')) + 1) % 26 + ord('A'))
+        n = "1"
+    else:
+        n = ''.join(list(filter(lambda x: x.isdigit(), rev)))
+        n = str(int(n) + 1)
+    rev = a + n
+    return rev
 
 def create_part(part: PartCreate, session: Session) -> Part:
     db_part = Part.model_validate(part)
     session.add(db_part)
     session.commit()
     session.refresh(db_part)
-
+    save_snapshot(db_part.id, part.message, session)
     return db_part
+
+def update_part(part_id: int, update: PartUpdate, session: Session) -> Part:
+    part = session.get(Part, part_id)
+    if not part:
+        raise HTTPException(status_code=404, detail=f"Part-{part_id} not found")
+    keys = update.model_dump(exclude_unset=True).keys()
+    if "revision" not in keys:
+        lifecycle = getattr(update, "lifecycle", None)
+        prod = part.lifecycle == "Production" if not lifecycle else lifecycle == "Production"
+        part.revision = _update_rev(part.revision, prod)
+    for key in keys:
+        if key == "message":
+            continue
+        val = getattr(update, key, None)
+        assert val
+        setattr(part, key, val)
+    session.add(part)
+    session.commit()
+    session.refresh(part)
+    save_snapshot(part.id, update.message, session)
+    return part
 
 def get_detailed_part_info(part_id: int, session: Session) -> PartRead:
     part = session.get(Part, part_id).model_dump()
@@ -40,7 +85,6 @@ def get_parts_in_category(category_id: int, session: Session) -> list[PartReadBa
     statement = select(Part).where(Part.category_id == category_id)
     parts = session.exec(statement).all()
     return [PartReadBasic.model_validate(part) for part in parts]
-
 
 def create_category(category: CategoryCreate, session: Session) -> Category:
     db_category = Category.model_validate(category)

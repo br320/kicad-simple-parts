@@ -37,8 +37,24 @@ class Part(PartBase, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+    # Relationships
+    history: list["PartHistory"] = Relationship(back_populates="part")
+
 class PartCreate(PartBase):
-    pass
+    message: Optional[str] = Field(default="")
+
+class PartUpdate(SQLModel):
+    message: Optional[str] = ...
+    revision: Optional[str] = None
+    lifecycle: Optional[str] = None
+    name: Optional[str] = None
+    category_id: Optional[int] = None
+    flags: Optional[int] = None
+    description: Optional[str] = None
+    value: Optional[str] = None
+    datasheet: Optional[str] = None
+    symbolIdStr: Optional[str] = None
+    footprint: Optional[str] = None
 
 class PartRead(SQLModel):
     id: int
